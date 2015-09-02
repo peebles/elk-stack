@@ -1,0 +1,19 @@
+elasticsearch:
+  extends:
+    file: docker-compose-common.yml
+    service: elasticsearch
+  build: dockerfiles/elasticsearch
+logs:
+  extends:
+    file: docker-compose-common.yml
+    service: logstash
+  build: dockerfiles/logstash
+  links:
+    - elasticsearch:elasticsearch
+kibana:
+  extends:
+    file: docker-compose-common.yml
+    service: kibana
+  build: dockerfiles/kibana
+  links:
+    - elasticsearch:elasticsearch

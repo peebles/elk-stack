@@ -1,0 +1,22 @@
+elasticsearch:
+  ports:
+    - "9200:9200"
+    - "9300:9300"
+logstash:
+  ports:
+    - "3030:5000"
+    - "3030:5000/udp"
+  environment:
+    # otherwise logstash will keep sending its own logs to itself over and
+    # over... not fun
+    LOGSPOUT: ignore
+    AWS_KEY: YOUR_AWS_KEY
+    AWS_SECRET: YOUR_AWS_SECRET
+    S3BUCKET: s3://YOUR_S3_BUCKET
+kibana:
+  ports:
+    - "80:80"
+    - "443:443"
+  environment:
+    KIBANA_USER: admin
+    KIBANA_PASS: password
