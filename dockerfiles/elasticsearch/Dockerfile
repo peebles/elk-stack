@@ -1,9 +1,9 @@
 FROM debian:jessie
 RUN apt-get update && \
     apt-get install -y openjdk-7-jre wget
-ENV JAVA_HOME /usr/lib/jvm/java-6-openjdk-amd64
+ENV JAVA_HOME /usr/lib/jvm/java-7-openjdk-amd64
 RUN (cd /tmp && \
-    wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.4.0.tar.gz -O pkg.tar.gz && \
+    wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.4.4.tar.gz -O pkg.tar.gz && \
     tar zxf pkg.tar.gz && mv elasticsearch-* /opt/elasticsearch &&\
     rm -rf /tmp/*)
 COPY elasticsearch.yml /opt/elasticsearch/config/elasticsearch.yml
