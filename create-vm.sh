@@ -1,10 +1,12 @@
 #!/bin/bash
 #
-# Usage: $0 aws_profile_name hostname
+# Usage: $0 aws_profile_name hostname [security_group]
 #
 # Run this script with an aws profile name as an
 # argument (the profile name is the name of a profile
 # you have defined in $HOME/.aws/config).
+#
+# Security group defaults to the hostname argument.
 #
 # This will create a machine in AWS called $hostname.
 #
@@ -15,6 +17,7 @@
 #
 profile_name=$1
 hostname=$2
+security_group=$3
 
 if [[ ("$profile_name" = "") || ("$hostname" = "") ]]; then
     echo "Usage: $0 <profile> <hostname>"
@@ -48,8 +51,12 @@ eval $(parse_aws $HOME/.aws/config)
 # exist.  If it gets created, you will need to
 # use the AWS console to add rules for accessing
 # the ports you need (port 80 specifically).
-SecurityGroup="docker"
-
+if [ ! -z "$security_group" ]; then
+    SecurityGroup=$security_group
+else
+    SecurityGroup=$hostname
+fi
+    
 # The type of machine to create
 InstanceType="t2.small"
 
@@ -64,11 +71,13 @@ Zone=${azone#$Region}
 Key=$(aws_value $profile_name 'aws_access_key_id')
 Secret=$(aws_value $profile_name 'aws_secret_access_key')
 
-echo "Access Key = $Key"
-echo "Secret     = $Secret"
-echo "VPC ID     = $VpcId"
-echo "Zone       = $Zone"
-echo "Region     = $Region"
+echo "Hostname     = $hostname"
+echo "Access Key   = $Key"
+echo "Secret       = $Secret"
+echo "VPC ID       = $VpcId"
+echo "Zone         = $Zone"
+echo "Region       = $Region"
+echo "Security Grp = $SecurityGroup"
 
 docker-machine create --driver amazonec2 \
   --amazonec2-access-key $Key \
