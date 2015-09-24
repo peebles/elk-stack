@@ -25,7 +25,16 @@ You can create a machine to host this stack by executing:
 
 Once this is up, go to the aws console and edit the "sgelk" security group.  Add global access to ports 80
 and 443.  Add access to port 9200 to THIS SECURITY GROUP ONLY.  Add access to UDP port 3030 and TCP port 3030
-to everyone, or to a security group, depending on how you are logging (port 3030 is the Logstash port).
+to everyone, or to a security group, depending on how you are logging (port 3030 is the Logstash port).  Also
+add access to 3031 udp/tcp if you want to use "meta logging".
+
+### Meta Logging
+
+The logstash.config in this stack listens on 5000 udp/tcp and tags any incoming messages with type=syslog.
+It also listens on 5001 udp/tcp and tags any messages coming in on those ports with type=meta.  You can
+take advantage of this by sending normal log messages to 5000 and any special messages to 5001.  You can
+then filter for "type:syslog" in Kibana to see only the normal log messages, and "type:meta" to see
+special messages.  I use this technique to write data structures into elastic search for analytics.
 
 ## Protect Kibana
 
@@ -78,3 +87,10 @@ In this directory, run:
     docker-compose up -d
 
 You should now be able to browse to the IP address of the docker machine you created.
+
+To re-build and re-deploy one of the services in this stack:
+
+    docker-compose build SERVICE
+    docker-compose up --no-deps -d SERVICE
+
+where SERVICE is one of elasticsearch, logstash, kibana.
