@@ -30,7 +30,8 @@ echo "Creating \"$hostname\" ..."
 function parse_aws {
     cat $1 | awk -F' ' '{
 if ( $1 == "[default]" ) { profile="default"; }
-else if ( substr($1,0,1) == "[" ) { profile=$2; gsub(/[\[\]]/,"",profile); }
+else if ( substr($1,0,8) == "[profile" ) { profile=$2; gsub(/[\[\]]/,"",profile); }
+else if ( substr($1,0,1) == "[" ) { profile=$1; gsub(/[\[\]]/,"",profile); }
 else { printf("%s_%s=\"%s\"\n", profile, $1, $3); }
 }'
 }
@@ -44,8 +45,9 @@ function aws_value {
     eval "V=\$$pv"
     echo $V
 }
-    
+
 eval $(parse_aws $HOME/.aws/config)
+eval $(parse_aws $HOME/.aws/credentials)
 
 # This will be created if it does not already
 # exist.  If it gets created, you will need to
