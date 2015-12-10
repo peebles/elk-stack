@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Usage: $0 aws_profile_name hostname [security_group]
+# Usage: $0 -p aws_profile_name -h hostname [-s security_group] [-v vpcid] [-i instance-type]
 #
 # Run this script with an aws profile name as an
 # argument (the profile name is the name of a profile
@@ -15,12 +15,32 @@
 #
 # Also uses aws-cli (aws).  
 #
-profile_name=$1
-hostname=$2
-security_group=$3
+
+while getopts ":p:h:s:v:" opt; do
+    case $opt in
+	p)
+	    profile_name=$OPTARG
+	    ;;
+	h)
+	    hostname=$OPTARG
+	    ;;
+	s)
+	    security_group=$OPTARG
+	    ;;
+	v)
+	    vpcid=$OPTARG
+	    ;;
+	i)
+	    itype=$OPTARG
+	    ;;
+	\?)
+	    echo "Usage: $0 -p aws_profile_name -h hostname [-s security_group] [-v vpcid]  [-i instance-type]"
+	    ;;
+    esac
+done
 
 if [[ ("$profile_name" = "") || ("$hostname" = "") ]]; then
-    echo "Usage: $0 <profile> <hostname>"
+    echo "Usage: $0 -p aws_profile_name -h hostname [-s security_group] [-v vpcid] [-i instance-type]"
     exit 1
 fi
 
@@ -56,17 +76,21 @@ eval $(parse_aws $HOME/.aws/credentials)
 if [ ! -z "$security_group" ]; then
     SecurityGroup=$security_group
 else
-    SecurityGroup=$hostname
+    SecurityGroup="${hostname}-sg"
 fi
     
 # The type of machine to create
 InstanceType="t2.small"
+if [ ! -z "$itype" ]; then
+    InstanceType=$itype
+fi
 
-# Name of the machine.
-HostName="webserver"
-
-VpcId=$(aws ec2 describe-subnets --profile $profile_name --output text --query 'Subnets[0].VpcId')
-azone=$(aws ec2 describe-subnets --profile $profile_name --output text --query 'Subnets[0].AvailabilityZone')
+if [ -z "$vpcid" ]; then
+    VpcId=$(aws ec2 --profile $profile_name describe-vpcs --query 'Vpcs[].[VpcId,IsDefault]' --output text|grep True|awk '{print $1}')
+else
+    VpcId=$vpcid
+fi
+azone=$(aws ec2 --profile $profile_name  describe-subnets --filters "Name=vpc-id,Values=$VpcId" --output text --query 'Subnets[0].AvailabilityZone')
 Region=$(aws_value $profile_name "region")
 Zone=${azone#$Region}
 
