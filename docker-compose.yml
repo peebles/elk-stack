@@ -17,3 +17,13 @@ kibana:
   build: dockerfiles/kibana
   links:
     - elasticsearch:elasticsearch
+proxy:
+  extends:
+    file: docker-compose-common.yml
+    service: proxy
+  build: dockerfiles/logstash-email-proxy
+  links:
+    - logs:logs
+  volumes_from:
+    - logs
+  restart: always

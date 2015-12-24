@@ -16,7 +16,7 @@
 # Also uses aws-cli (aws).  
 #
 
-while getopts ":p:h:s:v:" opt; do
+while getopts ":p:h:s:v:i:" opt; do
     case $opt in
 	p)
 	    profile_name=$OPTARG
@@ -84,7 +84,6 @@ InstanceType="t2.small"
 if [ ! -z "$itype" ]; then
     InstanceType=$itype
 fi
-
 if [ -z "$vpcid" ]; then
     VpcId=$(aws ec2 --profile $profile_name describe-vpcs --query 'Vpcs[].[VpcId,IsDefault]' --output text|grep True|awk '{print $1}')
 else

@@ -9,6 +9,10 @@ can be secured behind a security group (or otherwise made accessible only to the
 instance.  Access to the Logstash instance can be protected or be open to the internet depending on how your
 applications need to log to it.
 
+There is an application called the "proxy" that sits in front of logstash.  This proxy provides a "tail -f"
+web gui on incoming messages, and has an interface for specifying regular expressions that identify "events"
+which can be sent via email to interested parties.  This is on port 8080.
+
 ## AWS EC2
 
 You can create a machine to host this stack by executing:
@@ -23,10 +27,12 @@ You can create a machine to host this stack by executing:
                --amazonec2-instance-type t2.small \
 	       elk
 
-Once this is up, go to the aws console and edit the "sgelk" security group.  Add global access to ports 80
+Once this is up, go to the aws console and edit the "sgelk" security group.  Add global access to ports 80, 8080
 and 443.  Add access to port 9200 to THIS SECURITY GROUP ONLY.  Add access to UDP port 3030 and TCP port 3030
 to everyone, or to a security group, depending on how you are logging (port 3030 is the Logstash port).  Also
 add access to 3031 udp/tcp if you want to use "meta logging".
+
+Kibana will be on port 80 (or 443).  The logstash proxy web gui will be on port 8080.
 
 ### Meta Logging
 
@@ -69,7 +75,7 @@ the container.  You can access a log file like this:
 
 or
 
-    docker exec -it elk_logs_1 tail -f ../all.log
+    docker exec -it elk_logs_1 tail -f all.log
 
 
 ## Edit your Environment
@@ -77,6 +83,18 @@ or
 Copy docker-compose-common.yml.sample to docker-compose-common.yml.  Change the YOUR_AWS_KEY and YOUR_AWS_SECRET to your values.
 Change YOUR_S3_BUCKET to a S3 bucket of your choosing for storing rotated log files.  Change KIBANA_USER and KIBANA_PASS to
 a username/password for access to the Kibana web pages.
+
+For the proxy service which sends email, there are more enviornment variables that must be set:
+
+    PROXY_SQLITEDB:       /data/logger.db
+    PROXY_WEBSERVER_USER: admin
+    PROXY_WEBSERVER_PASS: password
+    PROXY_SMTP_USER:      smpt-server-username
+    PROXY_SMTP_PASS:      smtp-server-password
+    PROXY_SMTP_HOST:      smtp.sendgrid.net
+    PROXY_SMTP_PORT:      465
+    PROXY_SMTP_AUTH:      PLAIN
+    PROXY_SMTP_FROM:      events@uware.co
 
 ## Launch
 
@@ -93,4 +111,4 @@ To re-build and re-deploy one of the services in this stack:
     docker-compose build SERVICE
     docker-compose up --no-deps -d SERVICE
 
-where SERVICE is one of elasticsearch, logstash, kibana.
+where SERVICE is one of elasticsearch, logs, kibana or proxy.

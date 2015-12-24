@@ -22,7 +22,9 @@ RUN rm -f /etc/cron.daily/*
 # For logrotate
 RUN /etc/init.d/cron start
 # To store application logs
-RUN mkdir -p /var/log/apps
+VOLUME ["/log"]
+EXPOSE 5000 5001 5000/udp 5001/udp
+RUN mkdir -p /log
 # For ease of running tail -f, ls -ltr, etc
-WORKDIR /var/log/apps
+WORKDIR /log
 CMD sh /tmp/run.sh
