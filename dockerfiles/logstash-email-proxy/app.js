@@ -6,6 +6,7 @@ var bodyParser = require('body-parser');
 var winston = require( "winston" );
 var async = require( 'async' );
 var _ = require( 'lodash' );
+require( 'json-lucene-like-query' );
 
 process.on( 'uncaughtException', function( err ) {
     if ( err.stack && typeof err.stack == 'object' ) {
@@ -27,8 +28,32 @@ app.config.resolve = function( path ) {
     var envvar = val.split(':')[1];
     var defvar = val.split(':')[2];
     var v = ( process.env[ envvar ] || defvar );
+    if ( v.match( /^\d+$/ ) ) v = Number( v );
+    else if ( v == 'true' ) v = true;
+    else if ( v == 'false' ) v = false;
+    else if ( v == 'null' ) v = null;
     _.set( this, path, v );
     return v;
+}
+
+// proxy port mappings can be passed in as arguments of the form:
+//
+//   from-port/proto,to-server:to-port
+//
+// ex.:
+//
+//   554/udp,54.64.120.134:554
+//
+for( var i=2; i<process.argv.length; i++ ) {
+    var arg = process.argv[i];
+    var m = arg.match(/^(\d+)\/([^,]{3}),([^:]+):(\d+)/);
+    if ( m ) {
+	app.config.proxy.push({
+	    from: Number( m[1] ), protocol: m[2],
+	    to: { host: m[3], port: Number( m[4] ) },
+	    ignore: false
+	});
+    }
 }
 
 app.log = new (winston.Logger)({
@@ -71,7 +96,8 @@ var mq = async.queue( function( json, cb ) {
     else
         fullLine = json.time + ' ' + json.host + ' - ' + json.message;
     app.log.debug( fullLine );
-    DBUtils.handle_line( fullLine, cb );
+    app.get( 'lineQueue' ).add( json );
+    DBUtils.handle_line( fullLine, json, cb );
 }, 1 );
 
 async.series([
@@ -95,6 +121,7 @@ async.series([
     }
     
     DBUtils = require( './db' )( app );
+    app.set( 'lineQueue', require( './line-queue' )( app ) );
 
     // view engine setup
     app.set('views', path.join(__dirname, 'views'));

@@ -16,12 +16,12 @@
     "ejs": "~0.8.5",
     "express": "^4.8.2",
     "glossy": "^0.1.7",
+    "json-lucene-like-query": "0.0.1",
     "knex": "^0.8.6",
     "lodash": "^3.10.1",
     "mkdirp": "^0.5.1",
     "moment": "^2.10.6",
     "nodemailer": "^1.10.0",
-    "smtp-connection": "^1.3.6",
     "sqlite3": "^3.0.9",
     "static-favicon": "^1.0.2",
     "winston": "^2.1.1"

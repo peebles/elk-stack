@@ -21,7 +21,6 @@ ENV PROXY_WEBSERVER_USER admin
 ENV PROXY_WEBSERVER_PASS password
 ENV PROXY_SMTP_USER admin
 ENV PROXY_SMTP_PASS password
-ENV PROXY_ALL_LOG /var/log/all.log
 
 WORKDIR /deploy
 CMD ["./run.sh"]

@@ -1,12 +1,11 @@
 {
     "webserver_port": 8080,
-    "logfile": "ENV:PROXY_ALL_LOG:/log/all.log",
     "auth": {
 	"username": "ENV:PROXY_WEBSERVER_USER:admin",
 	"password": "ENV:PROXY_WEBSERVER_PASS:password"
     },
     "logger": {
-	"level": "debug",
+	"level": "info",
 	"filename": "/tmp/proxy.log"
     },
     "smtp": {
@@ -18,25 +17,21 @@
 	"options": {
 	    "port": "ENV:PROXY_SMTP_PORT:465",
 	    "host": "ENV:PROXY_SMTP_HOST:smpt.gmail.com",
-	    "secure": true,
-	    "ignoreTLS": false,
-	    "requireTLS": true,
-	    "name": "logstash-proxy",
-	    "localAddress": "0.0.0.0",
-	    "connectionTimeout": 3000,
-	    "greetingTimeout": 3000,
-	    "socketTimeout": 5000,
-	    "debug": true,
-	    "lmtp": false,
+	    "secure": "ENV:PROXY_SMTP_SECURE:true",
+	    "ignoreTLS": "ENV:PROXY_SMTP_IGNORETLS:false",
+	    "requireTLS": "ENV:PROXY_SMTP_REQUIRETLS:true",
+	    "name": "ENV:PROXY_SMTP_NAME:logstash-proxy",
+	    "localAddress": "ENV:PROXY_SMTP_LOCAL_ADDRESS:0.0.0.0",
+	    "connectionTimeout": "ENV:PROXY_SMTP_CONNECTION_TIMEOUT:3000",
+	    "greetingTimeout": "ENV:PROXY_SMTP_GREETING_TIMEOUT:3000",
+	    "socketTimeout": "ENV:PROXY_SMTP_SOCKET_TIMEOUT:5000",
+	    "debug": "ENV:PROXY_SMTP_DEBUG:false",
+	    "lmtp": "ENV:PROXY_SMTP_LMTP:false",
 	    "authMethod": "ENV:PROXY_SMTP_AUTH:PLAIN",
 	    "tls": {}
 	}
     },
     "proxy": [
-	{ "from": 2020, "to": { "port": 5000, "host": "logs" }, "protocol": "tcp", "ignore": false },
-	{ "from": 2020, "to": { "port": 5000, "host": "logs" }, "protocol": "udp", "ignore": false },
-	{ "from": 2021, "to": { "port": 5001, "host": "logs" }, "protocol": "tcp", "ignore": false },
-	{ "from": 2021, "to": { "port": 5001, "host": "logs" }, "protocol": "udp", "ignore": false }
     ],
     "db": {
 	"connection": {

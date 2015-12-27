@@ -100,10 +100,7 @@ router.get('/tail', function( req, res, next ) {
     offset = Number( offset );
     limit  = Number( limit );
 
-    var filename = app.config.resolve( 'logfile' );
-
-    var size = fs.statSync( filename ).size;
-    var buf;
+    var size = app.get( 'lineQueue' ).length();
 
     if ( size <= offset ) {
 	res.setHeader( 'Content-Type', 'text/plain' );
@@ -113,13 +110,8 @@ router.get('/tail', function( req, res, next ) {
 	return res.end();
     }
 
-    if ( offset == -1 ) {
-	offset = size - 4096;
-	if ( offset < 0 ) offset == 0;
-    }
-
     //console.log( 'doing a tail:', offset, limit, regex );
-    tail( filename, offset, limit, regex, function( err, data ) {
+    app.get( 'lineQueue' ).get( offset, regex, function( err, data ) {
 	if ( err ) return next( err );
 	res.setHeader( 'Content-Type', 'text/plain' );
 	var newOffset = offset + data.bytes;

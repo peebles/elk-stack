@@ -9,6 +9,16 @@ module.exports = function( app ) {
     app.config.resolve( 'smtp.auth.pass' );
     app.config.resolve( 'smtp.options.host' );
     app.config.resolve( 'smtp.options.port' );
+    app.config.resolve( 'smtp.options.secure' );
+    app.config.resolve( 'smtp.options.ignoreTLS' );
+    app.config.resolve( 'smtp.options.requireTLS' );
+    app.config.resolve( 'smtp.options.name' );
+    app.config.resolve( 'smtp.options.localAddress' );
+    app.config.resolve( 'smtp.options.connectionTimeout' );
+    app.config.resolve( 'smtp.options.greetingTimeout' );
+    app.config.resolve( 'smtp.options.socketTimeout' );
+    app.config.resolve( 'smtp.options.debug' );
+    app.config.resolve( 'smtp.options.lmtp' );
     app.config.resolve( 'smtp.options.authMethod' );
 
     var email = require( './email' )( app, app.config.smtp );
@@ -24,20 +34,26 @@ module.exports = function( app ) {
 	}
     );
 
-    function handle_line( line, cb ) {
+    function handle_line( line, json, cb ) {
 	if ( line.match( /^$/ ) ) return cb();
 	db( 'events' ).then( function( events ) {
 	    async.eachSeries( events, function( event, cb ) {
-		handle_event( line, event, cb );
+		handle_event( line, event, json, cb );
 	    }, function( err ) {
 		cb( err );
 	    });
 	}).catch( cb );
     }
 
-    function handle_event( line, event, cb ) {
-	var regexp = new RegExp( event.regex );
-	if ( ! line.match( regexp ) ) return cb();
+    function handle_event( line, event, json, cb ) {
+	//var regexp = new RegExp( event.regex );
+	//if ( ! line.match( regexp ) ) return cb();
+	try {
+	    if ( ! JSON.query( json, event.regex ).length ) return cb();
+	} catch( err ) {
+	    app.log.error( 'query problem:', event.regex, '=>', err );
+	    return cb();
+	}
 	db( 'users' ).where({ event_id: event.id }).then( function( users ) {
 	    async.eachSeries( users, function( user, cb ) {
 		handle_user( line, event, user, cb );
