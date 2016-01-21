@@ -1,8 +1,16 @@
+data:
+  image: busybox
+  container_name: data
+  volumes:
+    - /opt/elasticsearch/data
+  command: /bin/true
 elasticsearch:
   extends:
     file: docker-compose-common.yml
     service: elasticsearch
   build: dockerfiles/elasticsearch
+  volumes_from:
+    - data
 logs:
   extends:
     file: docker-compose-common.yml

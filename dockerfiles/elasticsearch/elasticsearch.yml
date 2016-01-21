@@ -386,3 +386,4 @@
 
 http.cors.enabled: true
 #http.cors.allow-origin: 
+threadpool.search.queue_size: 10000
