@@ -81,7 +81,7 @@ function setupProxyServers( log, proxies, messageQueue, cb ) {
 	  var client = new net.Socket();
 	  client.connect( proxy.to.port, proxy.to.host, function( err ) {
 	    if ( err ) log.error( from, err );
-	    else client.write( chunk, function() {
+	    else client.write( chunk.toString() + "\n", function() {
 	      client.end();
 	    });
 	  });
