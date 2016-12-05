@@ -10,6 +10,7 @@
    messageQueue: an aync.queue to push parsed messages to, if ignore is false
  */
 var async = require( 'async' );
+var byline = require( 'byline' );
 
 function setupProxyServers( log, proxies, messageQueue, cb ) {
   var syslogParser = require('glossy').Parse;
@@ -73,45 +74,41 @@ function setupProxyServers( log, proxies, messageQueue, cb ) {
       var net = require("net");
 
       var server = net.createServer( function( c ) {
-	var iBuffer = '';
-	c.on( 'error', function( err ) {
-	  log.error( from, err );
-	});
-	c.on( 'data', function( raw ) {
-	  iBuffer += raw.toString( 'utf8', 0 );
-	});
-	c.on( 'end', function() {
+	c = byline.createStream( c );
+	var Writable = require('stream').Writable;
+        var ws = Writable();
+        ws._write = function (chunk, enc, next) {
+	  var client = new net.Socket();
+	  client.connect( proxy.to.port, proxy.to.host, function( err ) {
+	    if ( err ) log.error( from, err );
+	    else client.write( chunk, function() {
+	      client.end();
+	    });
+	  });
+
+	  var line = chunk.toString();
 	  try {
-	    var client = new net.Socket();
-	    client.connect( proxy.to.port, proxy.to.host, function( err ) {
-	      if ( err ) log.error( from, err );
-	      else client.write( iBuffer, function() {
-		client.end();
-	      });
+	    var parsed = JSON.parse( line );
+	    parsed = { originalMessage: line };
+	    messageQueue.push( parse( parsed ), function(err) {
+	      if ( err ) log.error( err );
+	      next();
 	    });
 	  } catch( err ) {
-	    log.error( err );
+	    try {
+	      syslogParser.parse( line, function( parsed ) {
+		messageQueue.push( parse( parsed ), function(err) {
+		  if ( err ) log.error( err );
+		  next();
+		});
+	      });
+	    } catch( err ) {
+	      log.error( err );
+	      next();
+	    }
 	  }
-	  if ( ! proxy.ignore ) {
-	    async.eachSeries( iBuffer.split("\n"), function( line, cb ) {
-	      try {
-		var parsed = JSON.parse( line );
-		parsed = { originalMessage: line };
-		messageQueue.push( parse( parsed ), cb );
-	      } catch( err ) {
-		try {
-		  syslogParser.parse( line, function( parsed ) {
-		    messageQueue.push( parse( parsed ), cb );
-		  });
-		} catch( err ) {
-		  cb( err );
-		}
-	      }
-	    }, function( err ) {
-	      if ( err ) log.error( 'TCP PROBLEM:', err );
-	    });
-	  }
-	});
+	}
+	c.pipe(ws);
       });
       
       server.on( 'error', function( err ) {
